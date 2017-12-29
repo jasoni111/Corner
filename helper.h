@@ -84,7 +84,7 @@ std::vector<uint8_t> readBMP(std::string const &fname, int& w, int& h) {
  *   |                       |
  * (0, h-1) ------------ (w-1, h-1)
  * The pixel information is stored by row in the array, i.e.
- * img[0] stores (0, 0); img[1] stores (0, 1); ...; img[w-1] stores (0, w-1); img[w] stores (1, 0).
+ * img[0] stores (0, 0); img[1] stores (1, 0); ...; img[w-1] stores (w-1, 0); img[w] stores (0, 1).
  *
  * @param  img Image vector
  * @param  x   x-coordinate of desired location
