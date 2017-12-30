@@ -14,8 +14,8 @@
 
     console.log('skygear container is now ready for making API calls.');
     Login()
-    Fetch()
-    skygear.pubsub.on('ping', (data) => {
+    FetchAll()
+    skygear.pubsub.on('upload', (data) => {
       console.log(data);
     });
   })
@@ -24,14 +24,6 @@
     let name = 'Leslie'
     let pw = 'BoyGod'
     console.log('hi')
-    skygear.auth.signupWithUsername(name, pw)
-      .then((user) => {
-        is_login = true
-        console.log(user)
-      },
-      (error) => {
-        console.log(error)
-      })
     skygear.auth.loginWithUsername(name, pw)
       .then((user) => {
         is_login = true
@@ -41,8 +33,23 @@
       })
   }
 
-  var Fetch = ()=>{
-    
+  var FetchAll = () => {
+    const Note = skygear.Record.extend('note');
+    const query = new skygear.Query(Note);
+    skygear.publicDB.query(query).then((notes) => {
+      // notes is an array of Note records that has its "title" equals "First note"
+      console.log(notes)
+    }, (error) => {
+      console.error(error);
+    });
+  }
+
+  var CompileSingle = (name,url)=>{
+    $.ajax({
+      url:`/sandbox/compiler?name=${name}&cppurl=${url}`,
+      success:(data)=>{
+        skygear.pubsub.publish('feedback', JSON.stringify(data))
+      }
+    })
   }
 </script>
-
