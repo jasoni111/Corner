@@ -1,0 +1,48 @@
+<!--Skygear CDN-->
+<script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
+<script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+
+<!--Skygear configuration-->
+<!--The app end point and the api key can be found in the developer portal-->
+<script>
+
+  skygear.config({
+    'endPoint': 'https://cornerch.skygeario.com/', // trailing slash is required
+    'apiKey': '93e92fb17bce4768820d623c71ca7b6d',
+  }).then(() => {
+
+    console.log('skygear container is now ready for making API calls.');
+    Login()
+    Fetch()
+    skygear.pubsub.on('ping', (data) => {
+      console.log(data);
+    });
+  })
+
+  var Login = () => {
+    let name = 'Leslie'
+    let pw = 'BoyGod'
+    console.log('hi')
+    skygear.auth.signupWithUsername(name, pw)
+      .then((user) => {
+        is_login = true
+        console.log(user)
+      },
+      (error) => {
+        console.log(error)
+      })
+    skygear.auth.loginWithUsername(name, pw)
+      .then((user) => {
+        is_login = true
+        console.log(user); // user object
+      }, (error) => {
+        console.error(error);
+      })
+  }
+
+  var Fetch = ()=>{
+    
+  }
+</script>
+
