@@ -6,4 +6,11 @@ localhost PHP for downloading, compiling and marking submitted works, subscribe 
 structure:
 
 Normal user interface: index.html
-- 
+
+ToDo
+
+- compiler download download source from url and compile
+- marks calculation
+- pubsub support
+- marks display
+- better UIUX

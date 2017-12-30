@@ -15,8 +15,14 @@
     console.log('skygear container is now ready for making API calls.');
     Login()
     FetchAll()
-    skygear.pubsub.on('upload', (data) => {
-      console.log(data);
+    skygear.pubsub.on('upload', (name) => {
+      const query = new skygear.Query(Note);
+      query.equalTo('name', name)
+      skygear.publicDB.query(query)
+        .then((records) => {
+          const note = records[0]
+          CompileSingle(note.name,note.)
+        })
     });
   })
 
@@ -39,15 +45,16 @@
     skygear.publicDB.query(query).then((notes) => {
       // notes is an array of Note records that has its "title" equals "First note"
       console.log(notes)
+      notes.forEach((note)=>{CompileSingle(note.name,note.attachment.url)})
     }, (error) => {
       console.error(error);
     });
   }
 
-  var CompileSingle = (name,url)=>{
+  var CompileSingle = (name, url) => {
     $.ajax({
-      url:`/sandbox/compiler?name=${name}&cppurl=${url}`,
-      success:(data)=>{
+      url: `/sandbox/compile?name=${name}&cppurl=${url}`,
+      success: (data) => {
         skygear.pubsub.publish('feedback', JSON.stringify(data))
       }
     })
