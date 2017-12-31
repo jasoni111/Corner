@@ -1,0 +1,30 @@
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.js"></script>
+<style>
+canvas  
+ { background-image: url("sandbox/img/0037.bmp"); }
+</style>
+<div id="app">
+  <canvas onclick="Click(event)"></canvas>
+  <p>img name:</p>
+  <input type="text" value="sandbox/img/0037.bmp" onchange="app.src = this.value">
+  <textarea></textarea>
+</div>
+
+<script>
+
+  points = []
+
+  Click = (e)=>{
+    x = e.clientX
+    y = e.clientY
+    points.push([x,y])
+    $('textarea')[0].innerText = JSON.stringify(points)
+  }
+
+  var canvas = $('canvas')[0]
+  var ctx = canvas.getContext("2d");
+
+  canvas.width = 640
+  canvas.height = 480
+</script>
