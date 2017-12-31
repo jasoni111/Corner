@@ -16,7 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   }
   else{
     move_uploaded_file($_FILES['file']['tmp_name'],"main.cpp");
-    compile();
+    compile($name);
   }
 }
 else if($_SERVER["REQUEST_METHOD"] == "GET"){
@@ -26,9 +26,10 @@ else if($_SERVER["REQUEST_METHOD"] == "GET"){
   if(!isset($_GET["url"])){
     exit("missing url in GET params");
   }
-  $url = $_GET["url"];
+  $url = base64_decode($_GET["url"]);
   $name = $_GET["name"];
   file_put_contents("main.cpp", fopen($url, 'r'));
+  compile($name);
 }
 else{
   exit("please use post or get method");
@@ -46,7 +47,7 @@ function test_input($data) {
 // echo json_encode($r);
 // echo $c;
 
-function compile(){
+function compile($name){
   exec("g++ main.cpp",$r,$c);
   if($c!=0)exit("{name:'$name',error:'compilation error with exit code $c'}");
   exec("a.exe",$r,$c);

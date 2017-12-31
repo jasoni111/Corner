@@ -23,6 +23,7 @@
   };
 
   firebase.initializeApp(config);
+  var database = firebase.database();
   var storage = firebase.storage();
   var storageRef = storage.ref();
   var is_login = false
@@ -47,6 +48,11 @@
       .then((user) => {
         is_login = true
         if (callback) callback()
+        firebase.database().ref('users/' + name).set({
+          username: name,
+          marks:0,
+          trials:0
+        })
         console.log(user)
       },
       (error) => {
@@ -70,9 +76,9 @@
       let cppfile = $('input#file')[0].files[0]
 
       var fileRef = storageRef.child(`files/${name}.cpp`);
-
       fileRef.put(cppfile).then(function (snapshot) {
         console.log('Uploaded a blob or file!');
+        skygear.pubsub.publish('upload', name)
       });
     }
 
