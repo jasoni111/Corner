@@ -2,11 +2,29 @@
 <script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
 <script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
 
 <!--Skygear configuration-->
 <!--The app end point and the api key can be found in the developer portal-->
 <script>
+  var config = {
+    apiKey: "AIzaSyDeXslekRSxKlQzvdS3b908i18s1Ztg5ak",
+    authDomain: "corner-ch.firebaseapp.com",
+    databaseURL: "https://corner-ch.firebaseio.com",
+    projectId: "corner-ch",
+    storageBucket: "gs://corner-ch.appspot.com",
+    messagingSenderId: "202391887409",
 
+    rules: {
+      ".read": true,
+      ".write": true
+    }
+
+  };
+
+  firebase.initializeApp(config);
+  var storage = firebase.storage();
+  var storageRef = storage.ref();
   var is_login = false
 
   skygear.config({
@@ -21,13 +39,14 @@
     });
   })
 
-  var Login = () => {
+  var Login = (callback = null) => {
     let name = $('input#name')[0].value
     let pw = $('input#password')[0].value
     console.log('hi')
     skygear.auth.signupWithUsername(name, pw)
       .then((user) => {
         is_login = true
+        if (callback) callback()
         console.log(user)
       },
       (error) => {
@@ -35,6 +54,7 @@
         skygear.auth.loginWithUsername(name, pw)
           .then((user) => {
             is_login = true
+            if (callback) callback()
             console.log(user); // user object
           }, (error) => {
             console.error(error);
@@ -44,42 +64,17 @@
 
   var Upload = () => {
     console.log('uploading...')
-    if (!is_login) Login()
+    if (!is_login) Login(Upload)
+    else {
+      let name = $('input#name')[0].value
+      let cppfile = $('input#file')[0].files[0]
 
-    let name = $('input#name')[0].value
-    let cppfile = $('input#file')[0].files[0]
-    const file = new skygear.Asset({
-      name: name + ".cpp",
-      file: cppfile,
-    });
+      var fileRef = storageRef.child(`files/${name}.cpp`);
 
-    const Note = skygear.Record.extend('note');
-
-    const query = new skygear.Query(Note);
-    query.equalTo('name', name)
-    skygear.publicDB.query(query)
-      .then((records) => {
-        //not first time delete
-        skygear.publicDB.delete({
-          id: records[0].id
-        }).then((record) => {
-          console.log('deleted',record)
-        }, (error) => {
-          console.error(error)
-        });
-
-        //first upload create
-        const note = new Note({ name: name, attachment: file });
-        skygear.publicDB.save(note)
-          .then((record) => {
-            console.log(record.attachment.url)
-            skygear.pubsub.publish('upload', name)
-          }, (error) => {
-            console.error(error)
-          })
-
-      })
-
+      fileRef.put(cppfile).then(function (snapshot) {
+        console.log('Uploaded a blob or file!');
+      });
+    }
 
   }
 </script>

@@ -2,11 +2,25 @@
 <script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
 <script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
 
 <!--Skygear configuration-->
 <!--The app end point and the api key can be found in the developer portal-->
 <script>
+  var config = {
+    apiKey: "AIzaSyDeXslekRSxKlQzvdS3b908i18s1Ztg5ak",
+    authDomain: "corner-ch.firebaseapp.com",
+    databaseURL: "https://corner-ch.firebaseio.com",
+    projectId: "corner-ch",
+    storageBucket: "",
+    messagingSenderId: "202391887409",
 
+    rules: {
+      ".read": true,
+      ".write": true
+    }
+  };
+  firebase.initializeApp(config);
   skygear.config({
     'endPoint': 'https://cornerch.skygeario.com/', // trailing slash is required
     'apiKey': '93e92fb17bce4768820d623c71ca7b6d',
@@ -16,14 +30,14 @@
     Login()
     FetchAll()
     skygear.pubsub.on('upload', (name) => {
-      console.log('recieved upload',name)
+      console.log('recieved upload', name)
       const Note = skygear.Record.extend('note');
       const query = new skygear.Query(Note);
       query.equalTo('name', name)
       skygear.publicDB.query(query)
         .then((records) => {
           const note = records[0]
-          CompileSingle(note.name,note.attachment.url)
+          CompileSingle(note.name, note.attachment.url)
         })
     });
   })
@@ -47,7 +61,7 @@
     skygear.publicDB.query(query).then((notes) => {
       // notes is an array of Note records that has its "title" equals "First note"
       console.log(notes)
-      notes.forEach((note)=>{CompileSingle(note.name,note.attachment.url)})
+      notes.forEach((note) => { CompileSingle(note.name, note.attachment.url) })
     }, (error) => {
       console.error(error);
     });
@@ -57,7 +71,7 @@
     $.ajax({
       url: `sandbox/compile.php?name=${name}&url=${url}`,
       success: (data) => {
-        console.log('compile done',data)
+        console.log('compile done', data)
         skygear.pubsub.publish('feedback', JSON.stringify(data))
       }
     })
