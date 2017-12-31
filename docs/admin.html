@@ -7,6 +7,16 @@
 <!--Skygear configuration-->
 <!--The app end point and the api key can be found in the developer portal-->
 <script>
+
+  var compiling = false
+  var queue = []
+  var Push = (item)=>{
+    queue.push(item)
+    if(!compiling){
+      CompileSingle()
+    }
+  }
+
   var config = {
     apiKey: "AIzaSyDeXslekRSxKlQzvdS3b908i18s1Ztg5ak",
     authDomain: "corner-ch.firebaseapp.com",
@@ -38,7 +48,7 @@
 
   var UploadListener = (name) => {
     console.log('recieved upload', name)
-    CompileSingle(name)
+    Push(name)
     skygear.pubsub.publish(name, "received")
   }
 
@@ -60,20 +70,30 @@
     ref.on("value", function (snapshot) {
       console.log(snapshot.val());
       for (var key in snapshot.val()) {
-        CompileSingle(key)
+        Push(key)
       }
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
     });
   }
 
-  var CompileSingle = (name) => {
+  var CompileSingle = () => {
+    var name = queue.shift()
+    compiling = true
+    console.log(`start compile ${name}`)
     storageRef.child(`files/${name}.cpp`).getDownloadURL().then(function (url) {
+      console.log('cpp url',url)
       $.ajax({
         url: `sandbox/compile.php?name=${name}&url=${btoa(url)}`,
         success: (data) => {
           console.log('compile done', data)
           skygear.pubsub.publish(name, JSON.stringify(data))
+          if(queue.length>0){
+            CompileSingle()
+          }
+          else{
+            compiling = false
+          }
         }
       })
     }).catch(function (error) {

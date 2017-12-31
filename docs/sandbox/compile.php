@@ -32,7 +32,7 @@ else if($_SERVER["REQUEST_METHOD"] == "GET"){
   compile($name);
 }
 else{
-  exit("please use post or get method");
+  
 }
 
 // exec()
@@ -43,21 +43,29 @@ function test_input($data) {
   return $data;
 }
 
-// exec("g++ main.cpp",$r,$c);
-// echo json_encode($r);
-// echo $c;
-
 function compile($name){
-  exec("g++ main.cpp",$r,$c);
+  unlink("result.txt");
+  exec("g++ main.cpp -std=c++11",$r,$c);
   if($c!=0)exit("{name:'$name',error:'compilation error with exit code $c'}");
-  exec("a.exe",$r,$c);
-  if($c!=0)exit("{name:'$name',error:'run time error with exit code $c'}");
-  $mark = mark($r[0]);
+  
+  execute("img/0001.bmp");
+  $mark = mark();
+
   $output = [
     "name"=>$name,
-    "output"=>$r,
     "mark"=>$mark
   ];
   echo json_encode($output);
   die();
+}
+
+function execute($arg){
+  if($arg){
+    exec("a.exe $arg",$r,$c);
+  }
+  else{
+    exec("a.exe",$r,$c);
+  }
+  if($c!=0)exit("{name:'$name',error:'run time error with exit code $c'}");
+  return $r;
 }
