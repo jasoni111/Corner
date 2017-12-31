@@ -26,18 +26,13 @@
   var database = firebase.database();
   var storage = firebase.storage();
   var storageRef = storage.ref();
-  var is_login = false
+  var login_user = false
 
   skygear.config({
     'endPoint': 'https://cornerch.skygeario.com/', // trailing slash is required
     'apiKey': '93e92fb17bce4768820d623c71ca7b6d',
   }).then(() => {
-
     console.log('skygear container is now ready for making API calls.');
-
-    skygear.pubsub.on('feedback', (data) => {
-      console.log(data);
-    });
   })
 
   var Login = (callback = null) => {
@@ -46,31 +41,36 @@
     console.log('hi')
     skygear.auth.signupWithUsername(name, pw)
       .then((user) => {
-        is_login = true
-        if (callback) callback()
+        console.log(user)
         firebase.database().ref('users/' + name).set({
           username: name,
-          marks:0,
-          trials:0
+          marks: 0
         })
-        console.log(user)
+
+        LoginSuccess(name, callback)
       },
       (error) => {
-        console.log(error)
         skygear.auth.loginWithUsername(name, pw)
           .then((user) => {
-            is_login = true
-            if (callback) callback()
-            console.log(user); // user object
+            console.log(user)
+            LoginSuccess(name, callback)
           }, (error) => {
             console.error(error);
           })
       })
   }
 
+  var LoginSuccess = (name, callback) => {
+    skygear.pubsub.on(name, (data) => {
+      FeedbackListener(data)
+    });
+    login_user = name
+    if (callback) callback()
+  }
+
   var Upload = () => {
     console.log('uploading...')
-    if (!is_login) Login(Upload)
+    if (!login_user) Login(Upload)
     else {
       let name = $('input#name')[0].value
       let cppfile = $('input#file')[0].files[0]
@@ -81,8 +81,20 @@
         skygear.pubsub.publish('upload', name)
       });
     }
-
+    tout = setTimeout(() => {
+      alert('cannot connect to admin')
+      clearTimeout(tout)
+    }, 5000);
   }
+
+  var FeedbackListener = (data) => {
+    console.log(data)
+    if(data == "received"){
+      clearTimeout(tout)
+      console.log('well received')
+    }
+  }
+
 </script>
 
 <p>name:

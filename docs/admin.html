@@ -32,10 +32,15 @@
     Login()
     FetchAll()
     skygear.pubsub.on('upload', (name) => {
-      console.log('recieved upload', name)
-      CompileSingle(name)
+      UploadListener(name)
     });
   })
+
+  var UploadListener = (name) => {
+    console.log('recieved upload', name)
+    CompileSingle(name)
+    skygear.pubsub.publish(name, "received")
+  }
 
   var Login = () => {
     let name = 'Leslie'
@@ -68,7 +73,7 @@
         url: `sandbox/compile.php?name=${name}&url=${btoa(url)}`,
         success: (data) => {
           console.log('compile done', data)
-          skygear.pubsub.publish('feedback', JSON.stringify(data))
+          skygear.pubsub.publish(name, JSON.stringify(data))
         }
       })
     }).catch(function (error) {
