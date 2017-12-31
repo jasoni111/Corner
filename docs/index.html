@@ -1,7 +1,7 @@
 <!--Skygear CDN-->
 <script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
 <script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
 <!--Skygear configuration-->
 <!--The app end point and the api key can be found in the developer portal-->
@@ -59,25 +59,25 @@
     query.equalTo('name', name)
     skygear.publicDB.query(query)
       .then((records) => {
+        //not first time delete
+        skygear.publicDB.delete({
+          id: records[0].id
+        }).then((record) => {
+          console.log('deleted',record)
+        }, (error) => {
+          console.error(error)
+        });
+
         //first upload create
-        if (records.length === 0) {
-          const note = new Note({ name: name, attachment: file });
-          skygear.publicDB.save(note) 
-            .then((record) => {
-              skygear.pubsub.publish('upload', name)
-            }, (error) => {
-              console.error(error)
-            })
-        } 
-        //nextime upload update
-        else {
-          const note = records[0];
-          note['attachment'] = file;
-          return skygear.publicDB.save(note)
-            .then((record) => {
-              skygear.pubsub.publish('upload', name)
-            }, (error) => { console.log(error) });
-        }
+        const note = new Note({ name: name, attachment: file });
+        skygear.publicDB.save(note)
+          .then((record) => {
+            console.log(record.attachment.url)
+            skygear.pubsub.publish('upload', name)
+          }, (error) => {
+            console.error(error)
+          })
+
       })
 
 

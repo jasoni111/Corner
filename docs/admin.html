@@ -1,7 +1,7 @@
 <!--Skygear CDN-->
 <script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
 <script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 
 <!--Skygear configuration-->
 <!--The app end point and the api key can be found in the developer portal-->
@@ -16,12 +16,14 @@
     Login()
     FetchAll()
     skygear.pubsub.on('upload', (name) => {
+      console.log('recieved upload',name)
+      const Note = skygear.Record.extend('note');
       const query = new skygear.Query(Note);
       query.equalTo('name', name)
       skygear.publicDB.query(query)
         .then((records) => {
           const note = records[0]
-          CompileSingle(note.name,note.)
+          CompileSingle(note.name,note.attachment.url)
         })
     });
   })
@@ -53,8 +55,9 @@
 
   var CompileSingle = (name, url) => {
     $.ajax({
-      url: `/sandbox/compile?name=${name}&cppurl=${url}`,
+      url: `sandbox/compile.php?name=${name}&url=${url}`,
       success: (data) => {
+        console.log('compile done',data)
         skygear.pubsub.publish('feedback', JSON.stringify(data))
       }
     })
