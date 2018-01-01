@@ -76,6 +76,13 @@
       FeedbackListener(data)
     });
     login_user = name
+    ref = firebase.database().ref("users/"+name)
+    ref.on("value", function (snapshot) {
+      console.log(snapshot.val());
+      app.submits = snapshot.val().submits || []
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
+    });
     if (callback) callback()
   }
 
@@ -95,12 +102,21 @@
       let time = new Date()
       time = time.toISOString()
       var fileRef = storageRef.child(`files/${name}/${btoa(time)}.cpp`);
+      try{
       fileRef.put(cppfile).then(function (snapshot) {
 
         console.log('Uploaded a blob or file!');
         skygear.pubsub.publish('upload', { name: name, time: time })
         app.submits.splice(0, 0, { status: 'pending', time: time })
+        firebase.database().ref('users/' + name).set({submits:app.submits})
+      },function(error){
+        clearTimeout(tout)
       });
+      }
+      catch(e){
+        console.log(e)
+        clearTimeout(tout)
+      }
 
     }
   }
@@ -124,7 +140,20 @@
         app.submits[index].status = 'graded'
         app.submits[index].grade = data.grade
       }
+      firebase.database().ref('users/' + name).set({submits:app.submits})
     }
+  }
+
+  DownloadCpp = (base64)=>{
+    storageRef.child(`files/${name}/${base64}.cpp`).getDownloadURL().then(function (url) {
+      $.ajax({
+        url:url,
+        done:(data)=>{
+          $('code')[0].innerHTML=data
+          $('#source_code').modal('open')
+        }
+      })
+    })
   }
 
 </script>
@@ -185,16 +214,21 @@
             </tr>
           </tbody>
         </table>
+        <button class="waves-effect waves-light btn" :onclick="`DownloadCpp(btoa('${submit.time}'))`" target="_blank">View</button>
       </div>
     </li>
   </ul>
 
 
-  <!-- <div v-for="submit in submits">
-    <p>time:{{submit.time}} status:{{submit.status}}</p>
-    <div v-if="submit.status=='graded'">
-      <span v-for="(v,k) in submit.grade">({{k}},{{v}}) </span>
-    </div> -->
+  <div id="source_code" class="modal">
+      <div class="modal-content">
+        <h4>Modal Header</h4>
+        <code>A bunch of text</code>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+      </div>
+    </div>
 
 
 </div>
@@ -213,4 +247,6 @@
       moment: moment
     }
   })
+
+  $('.modal').modal()
 </script>
