@@ -90,12 +90,12 @@
         clearTimeout(tout)
       }, 5000);
 
-      var fileRef = storageRef.child(`files/${name}.cpp`);
+      let time = new Date()
+      time = time.toISOString()
+      var fileRef = storageRef.child(`files/${name}/${btoa(time)}.cpp`);
       fileRef.put(cppfile).then(function (snapshot) {
 
         console.log('Uploaded a blob or file!');
-        let time = new Date()
-        time = time.toISOString()
         skygear.pubsub.publish('upload', { name: name, time: time })
         app.submits.splice(0, 0, { status: 'pending', time: time })
       });
