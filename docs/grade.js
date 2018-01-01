@@ -53,7 +53,7 @@ Grade = (data)=>{
   }
   grade.mark = mark
   console.log(grade,results)
-  skygear.pubsub.publish(data.name, grade)
+  return grade
 }
 
 /**

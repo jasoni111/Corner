@@ -3,6 +3,11 @@
 <script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.min.js"></script>
+<script src="js/moment.min.js"></script>
+
 
 <script src="grade.js"></script>
 
@@ -10,6 +15,7 @@
 <!--The app end point and the api key can be found in the developer portal-->
 <script>
 
+  var users = {}
   var compiling = false
   var queue = []
   var Push = (item)=>{
@@ -46,12 +52,17 @@
     skygear.pubsub.on('upload', (name) => {
       UploadListener(name)
     });
+    skygear.pubsub.on('online', (name) => {
+      if(name=="?")
+      skygear.pubsub.publish('online','Y')
+    });
+    skygear.pubsub.publish('online','Y')
   })
 
-  var UploadListener = (name) => {
-    console.log('recieved upload', name)
-    Push(name)
-    skygear.pubsub.publish(name, "received")
+  var UploadListener = (obj) => {
+    console.log('recieved upload', obj)
+    Push(obj)
+    skygear.pubsub.publish(obj.name, "received")
   }
 
   var Login = () => {
@@ -71,16 +82,14 @@
     ref = firebase.database().ref("users")
     ref.on("value", function (snapshot) {
       console.log(snapshot.val());
-      for (var key in snapshot.val()) {
-        Push(key)
-      }
+      users = snapshot.val()
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
     });
   }
 
   var CompileSingle = () => {
-    var name = queue.shift()
+    var {name:name,time:time} = queue.shift()
     compiling = true
     console.log(`start compile ${name}`)
     storageRef.child(`files/${name}.cpp`).getDownloadURL().then(function (url) {
@@ -95,11 +104,20 @@
           else{
             compiling = false
           }
-          Grade(JSON.parse(data))
+          grade = Grade(JSON.parse(data))
+          skygear.pubsub.publish(name, {type:'grade',time:time,grade:grade})
         }
       })
     }).catch(function (error) {
       // Handle any errors
+      console.log(error)
+      skygear.pubsub.publish(data.name, {type:'fail',error:'network fail'})
+      if(queue.length>0){
+        CompileSingle()
+      }
+      else{
+        compiling = false
+      }
     });
   }
 </script>

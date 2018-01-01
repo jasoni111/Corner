@@ -1,11 +1,12 @@
-<!--Skygear CDN-->
 <script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
 <script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+<script src="https://vuejs.org/js/vue.js"></script>
+<script src="js/moment.min.js"></script>
 
-<!--Skygear configuration-->
-<!--The app end point and the api key can be found in the developer portal-->
 <script>
   var config = {
     apiKey: "AIzaSyDeXslekRSxKlQzvdS3b908i18s1Ztg5ak",
@@ -33,6 +34,14 @@
     'apiKey': '93e92fb17bce4768820d623c71ca7b6d',
   }).then(() => {
     console.log('skygear container is now ready for making API calls.');
+    skygear.pubsub.publish('online', '?')
+    online_check = setTimeout(()=>{Materialize.toast('the judge is not online',4000)},5000)
+    skygear.pubsub.on('online', (name) => {
+      if(name=='Y'){
+        Materialize.toast('the judge is online',4000)
+        clearTimeout(online_check)
+      }
+    });
   })
 
   var Login = (callback = null) => {
@@ -42,10 +51,6 @@
     skygear.auth.signupWithUsername(name, pw)
       .then((user) => {
         console.log(user)
-        firebase.database().ref('users/' + name).set({
-          username: name,
-          marks: 0
-        })
 
         LoginSuccess(name, callback)
       },
@@ -56,11 +61,13 @@
             LoginSuccess(name, callback)
           }, (error) => {
             console.error(error);
+            Materialize.toast('Login Fail', 4000)
           })
       })
   }
 
   var LoginSuccess = (name, callback) => {
+    Materialize.toast(`Login Success`, 4000)
     skygear.pubsub.on(name, (data) => {
       FeedbackListener(data)
     });
@@ -69,46 +76,104 @@
   }
 
   var Upload = () => {
-    console.log('uploading...')
     if (!login_user) Login(Upload)
     else {
+      console.log('uploading...')
+      Materialize.toast('Uploading', 4000)
       let name = $('input#name')[0].value
       let cppfile = $('input#file')[0].files[0]
 
+      tout = setTimeout(() => {
+        alert('cannot connect to admin')
+        clearTimeout(tout)
+      }, 5000);
+
       var fileRef = storageRef.child(`files/${name}.cpp`);
       fileRef.put(cppfile).then(function (snapshot) {
+        
+        firebase.database().ref('users/' + name).set({
+          username: name,
+          marks: 0
+        })
         console.log('Uploaded a blob or file!');
-        skygear.pubsub.publish('upload', name)
+        let time = Date()
+        skygear.pubsub.publish('upload', {name:name,time:time})
+        app.submits.splice(0,0,{status:'pending',time:time})
       });
+      
     }
-    tout = setTimeout(() => {
-      alert('cannot connect to admin')
-      clearTimeout(tout)
-    }, 5000);
   }
 
   var FeedbackListener = (data) => {
     console.log(data)
-    if(data == "received"){
+    if (data == "received") {
       clearTimeout(tout)
       console.log('well received')
+      Materialize.toast('You Program is Recieved', 4000)
+    }
+    else if (data.type=='grade') {
+      Materialize.toast('You Program is Graded', 4000)
+      index = app.submits.findIndex(o=>o.time==data.time)
+      app.submits[index].status='graded'
+      app.submits[index].grade=data.grade
     }
   }
 
 </script>
+<div id="app" class="container">
+  <h3>Corner Detection Challenge Judging System</h3>
+  <div class="row">
+    <div class="input-field col s5">
+      <input id="name" type="text" class="validate">
+      <label for="name">Name</label>
+    </div>
+    <div class="input-field col s5">
+      <input id="password" type="password" class="validate">
+      <label for="password">Password</label>
+    </div>
+    <p class="col s2">
+      <button class="waves-effect waves-light btn" id="login" onclick="Login()">login/sign up</button>
+    </p>
+  </div>
 
-<p>name:
-  <input type="text" id="name">
-</p>
-<p>password:
-  <input type="password" id="password">
-</p>
-<p>
-  <button id="login" onclick="Login()">login/sign up</button>
-</p>
 
-<p>Select your main.cpp:
+  <div class="file-field input-field">
+    <div class="btn">
+      <span>File</span>
+      <input type="file" id="file" name="file" accept=".cpp">
+    </div>
+    <div class="file-path-wrapper">
+      <input class="file-path validate" type="text">
+    </div>
+  </div>
+
+  <!-- <p>Select your main.cpp:
   <input type="file" id="file" name="file" accept=".cpp">
-</p>
+</p> -->
 
-<button id="upload" onclick="Upload()">Upload</button>
+  <button class="waves-effect waves-light btn red accent-2" id="upload" onclick="Upload()">Submit</button>
+
+  
+    
+        <div v-for="submit in submits">
+            <!-- <p>{{time}}</p> -->
+            <p>status:{{submit.status}}</p>
+            <div v-if="submit.status=='graded'">
+              <span v-for="(v,k) in submit.grade">({{k}},{{v}}) </span>
+            </div>
+          
+   
+</div>
+  
+  
+
+</div>
+
+<script>
+  app = new Vue({
+    el:"#app",
+    data:{
+      submits:[]
+    }
+  })
+</script>
