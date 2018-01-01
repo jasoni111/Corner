@@ -8,7 +8,6 @@
  */
 
 answers = false
-debug = false
 
 $.ajax({
   url:'ans/ans.json',
@@ -20,17 +19,15 @@ $.ajax({
 })
 
 Grade = (data)=>{
-  console.log('grade',data)
   results = Parse(data.result)
   console.log('parsed result',results)
   marks = 0
   results.forEach(photo=>{
-    debug = photo
     edges = Pair(photo.corners,answers[photo.name])
-    console.log('paired edges',edges)
+    photo.edges = edges
     marks += edges.reduce((value,edge)=>{return value+GradePair(edge[0],edge[1])},0)
   })
-  console.log(marks)
+  console.log(marks,results)
   skygear.pubsub.publish(data.name, marks)
 }
 
@@ -50,18 +47,16 @@ Grade = (data)=>{
  * 
  */
 Parse = (data)=>{
-  console.log(data)
   photo_results = []
   photo_strings = data.split(/\n/g).filter(s=>{return s!=''})
-  console.log(photo_strings)
   photo_strings.forEach(photo_string => {
     photo_content = photo_string.split(' ')
     photo_result = {
       name:photo_content[0],
-      length:photo_content[1],
+      length:Number(photo_content[1]),
       corners:photo_content.splice(2,photo_content[1]*2)
     }
-    photo_result.corners=photo_result.corners.filter((c,k)=>{return k%2===0}).map((c,k)=>{return [c,photo_result.corners[k*2+1]]})
+    photo_result.corners=photo_result.corners.filter((c,k)=>{return k%2===0}).map((c,k)=>{return [Number(c),Number(photo_result.corners[k*2+1])]})
     photo_results.push(photo_result)
   });
   return photo_results
@@ -82,16 +77,16 @@ Pair = (res_,ans_)=>{
   res.forEach((A,a_i)=>{
     A.mark_list=[]
     ans.forEach((B,b_i)=>{
-      A.mark_list.push({point:B,mark:GradePair(A,B)})
+      A.mark_list.push({point:B,mark:Dist(A,B)})
     })
-    A.mark_list.sort((a,b)=>{return b.mark-a.mark}) //large to small
+    A.mark_list.sort((a,b)=>{return a.mark-b.mark}) //small to large
   })
   ans.forEach((A,a_i)=>{
     A.mark_list=[]
     res.forEach((B,b_i)=>{
-      A.mark_list.push({point:B,mark:GradePair(A,B)})
+      A.mark_list.push({point:B,mark:Dist(A,B)})
     })
-    A.mark_list.sort((a,b)=>{return b.mark-a.mark}) //large to small
+    A.mark_list.sort((a,b)=>{return a.mark-b.mark}) //small to large
   })
   A_single = ans.slice()
   B_single = res.slice()

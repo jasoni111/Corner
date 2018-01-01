@@ -48,6 +48,7 @@ function compile($name){
   if($c!=0)exit("{name:'$name',error:'compilation error with exit code $c'}");
   
   execute("img/0037.bmp");
+  execute("img/0036.bmp");
 
   $output = [
     "name"=>$name,
