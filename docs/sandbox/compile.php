@@ -47,8 +47,9 @@ function compile($name){
   exec("g++ main.cpp -std=c++11",$r,$c);
   if($c!=0)exit("{name:'$name',error:'compilation error with exit code $c'}");
   
-  execute("img/0037.bmp");
-  execute("img/0036.bmp");
+  foreach(GenList() as $k=>$v){
+    execute($v);
+  }
 
   $output = [
     "name"=>$name,
@@ -72,4 +73,16 @@ function execute($arg){
 function LoadFile(){
   $myfile = fopen("result.txt", "r") or die("Unable to open file!");
   return fread($myfile,filesize("result.txt"));
+}
+
+function GenList(){
+  $list = [];
+  for($i=1; $i<=100; $i++){
+    $s = "0$i";
+    while(strlen($s)<4){
+      $s = "0".$s;
+    }
+    array_push($list,"img/$s.bmp");
+  }
+  return $list;
 }

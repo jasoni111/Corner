@@ -1,24 +1,19 @@
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.js"></script>
-<style>
-  canvas {
-    background-image: url("sandbox/img/0037.bmp");
-  }
-</style>
 <div id="app">
   <table width="100%">
     <tr width="100%">
       <td width="640px" height="480px">
-        <canvas width="640px" height="480px" onclick="Click(event)" :style="`background-image: url('${src}')`"></canvas>
+        <img style="position:absolute; top:0px; left:0px;margin:5px">
+        <canvas id="canvas" width="640px" height="480px" onclick="Click(event)" style="position:absolute; top:0px; left:0px;margin:5px"></canvas>
       </td>
       <td>
         <p>img name:
-          <input type="text" value="sandbox/img/0001.bmp" onchange="LoadPicture()">
+          <input type="text" value="img/0001.bmp" onchange="LoadPicture()">
           <button onclick="Next()">next picture</button>
           <button onclick="LoadPicture()">load picture</button>
         </p>
         <p>
-          <button onclick="points[app.src]=[];$('textarea')[0].value = JSON.stringify(points, null, 4)">reset this photo</button>
+          <button onclick="Reset()">reset this photo</button>
         </p>
         output:
         <br>
@@ -39,35 +34,47 @@
 
   points = {}
 
+  Reset = ()=>{
+    points[src]=[];
+    Output()
+    Clear()
+    DrawCorners()
+  }
+
   Output = () => {
     $('textarea')[0].value = JSON.stringify(points, null, 4)
   }
 
   Click = (e) => {
-    x = e.clientX
-    y = e.clientY
-    points[app.src].push([x, y])
+    x = e.clientX - canvas.offsetLeft
+    y = e.clientY - canvas.offsetTop
+    points[src].push([x, y])
     Draw([x, y])
     Output()
     $('textarea')[0].scrollTop = 99999
   }
 
   LoadPicture = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    app.src = $('input')[0].value
-    if (!(app.src in points)) {
-      points[app.src] = []
+    Clear()
+    src = $('input')[0].value
+    $('img')[0].src = src
+    if (!(src in points)) {
+      points[src] = []
     }
     else {
-      points[app.src].forEach(p => Draw(p))
+      DrawCorners()
     }
     Output()
   }
 
+  DrawCorners = ()=>{
+    points[src].forEach(p => {Draw(p)})
+  }
+
   Draw = ([x, y]) => {
-    ctx.beginPath();
     ctx.fillStyle = "#FF0000"
-    ctx.fillRect(x, y, 3, 3)
+    ctx.fillRect(x-5,y,10,1)
+    ctx.fillRect(x,y-5,1,10)
   }
 
   Next = () => {
@@ -79,25 +86,23 @@
     LoadPicture()
   }
 
-  var canvas = $('canvas')[0]
-  var ctx = canvas.getContext("2d");
+  Clear = ()=>{
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
 
-  canvas.width = 640
-  canvas.height = 480
+  canvas = document.getElementById('canvas')
+  ctx = canvas.getContext("2d");
 
   document.addEventListener('keydown', function (event) {
     console.log(event.keyCode)
     if (event.keyCode == 78) {
       Next()
     }
-  })
-
-  app = new Vue({
-    el: "#app",
-    data: {
-      src: "sandbox/img/0001.bmp"
+    else if (event.keyCode == 82) {
+      Reset()
     }
   })
+
 
   LoadPicture()
 </script>
