@@ -118,21 +118,27 @@
           else{
             compiling = false
           }
-          grade = Grade(JSON.parse(data))
-          FetchUser(name,(user)=>{
-            if(user.mark&&user.mark>grade.mark)return
-            user.mark=grade.mark
-            user.grade=grade
-            user.grade_time = time
-            SaveUser(name,user)
-          })
-          skygear.pubsub.publish(name, {type:'grade',time:time,grade:grade})
+          if('error' in JSON.parse(data)){
+            console.log('error',JSON.parse(data))
+            skygear.pubsub.publish(name, {type:'grade',time:time,error:JSON.parse(data).error})
+          }
+          else{
+            grade = Grade(JSON.parse(data))
+            FetchUser(name,(user)=>{
+              if(user.mark&&user.mark>grade.mark)return
+              user.mark=grade.mark
+              user.grade=grade
+              user.grade_time = time
+              SaveUser(name,user)
+            })
+            skygear.pubsub.publish(name, {type:'grade',time:time,grade:grade})
+          }
         }
       })
     }).catch(function (error) {
       // Handle any errors
       console.log(error)
-      skygear.pubsub.publish(data.name, {type:'fail',error:'network fail'})
+      skygear.pubsub.publish(data.name, {type:'grade',time:time,error:'network fail'})
       if(queue.length>0){
         CompileSingle()
       }

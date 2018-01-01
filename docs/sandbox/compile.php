@@ -43,9 +43,12 @@ function test_input($data) {
 }
 
 function compile($name){
-  unlink("result.txt");
+  if(file_exists("result.txt")){
+    unlink("result.txt");
+  }
+  
   exec("g++ main.cpp -std=c++11",$r,$c);
-  if($c!=0)exit("{name:'$name',error:'compilation error with exit code $c'}");
+  if($c!=0)exit('{"name":"'.$name.'","error":"compilation error with exit code '.$c.'"}');
   
   foreach(GenList() as $k=>$v){
     execute($v);
@@ -66,7 +69,7 @@ function execute($arg){
   else{
     exec("a.exe",$r,$c);
   }
-  if($c!=0)exit("{name:'$name',error:'run time error with exit code $c'}");
+  if($c!=0)exit('{"name":"'.$name.'","error":"run time error with exit code '.$c.'"}');
   return $r;
 }
 

@@ -111,10 +111,17 @@
       Materialize.toast('You Program is Recieved', 4000)
     }
     else if (data.type == 'grade') {
-      Materialize.toast('You Program is Graded', 4000)
       index = app.submits.findIndex(o => o.time == data.time)
-      app.submits[index].status = 'graded'
-      app.submits[index].grade = data.grade
+      if(data.error){
+        Materialize.toast('Your Program have '+data.error, 4000)
+        app.submits[index].status = 'error'
+        app.submits[index].error = data.error
+      }
+      else{
+        Materialize.toast('You Program is Graded', 4000)
+        app.submits[index].status = 'graded'
+        app.submits[index].grade = data.grade
+      }
     }
   }
 
@@ -162,7 +169,8 @@
       </div>
       <div class="collapsible-body">
         <span>Details</span>
-        <div v-if="!submit.grade">N/A</div>
+        <div v-if="!submit.grade&&!submit.error">N/A</div>
+        <div v-if="submit.error">{{submit.error}}</div>
         <table class="striped">
           <thead>
             <tr>
