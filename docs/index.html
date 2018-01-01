@@ -145,7 +145,7 @@
   }
 
   DownloadCpp = (base64)=>{
-    storageRef.child(`files/${name}/${base64}.cpp`).getDownloadURL().then(function (url) {
+    storageRef.child(`files/${login_user}/${base64}.cpp`).getDownloadURL().then(function (url) {
       $.ajax({
         url:url,
         done:(data)=>{
