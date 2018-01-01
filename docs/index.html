@@ -35,10 +35,10 @@
   }).then(() => {
     console.log('skygear container is now ready for making API calls.');
     skygear.pubsub.publish('online', '?')
-    online_check = setTimeout(()=>{Materialize.toast('the judge is not online',4000)},5000)
+    online_check = setTimeout(() => { Materialize.toast('the judge is not online', 4000) }, 5000)
     skygear.pubsub.on('online', (name) => {
-      if(name=='Y'){
-        Materialize.toast('the judge is online',4000)
+      if (name == 'Y') {
+        Materialize.toast('the judge is online', 4000)
         clearTimeout(online_check)
       }
     });
@@ -90,17 +90,18 @@
 
       var fileRef = storageRef.child(`files/${name}.cpp`);
       fileRef.put(cppfile).then(function (snapshot) {
-        
+
         firebase.database().ref('users/' + name).set({
           username: name,
           marks: 0
         })
         console.log('Uploaded a blob or file!');
-        let time = Date()
-        skygear.pubsub.publish('upload', {name:name,time:time})
-        app.submits.splice(0,0,{status:'pending',time:time})
+        let time = new Date()
+        time = time.toISOString()
+        skygear.pubsub.publish('upload', { name: name, time: time })
+        app.submits.splice(0, 0, { status: 'pending', time: time })
       });
-      
+
     }
   }
 
@@ -111,11 +112,11 @@
       console.log('well received')
       Materialize.toast('You Program is Recieved', 4000)
     }
-    else if (data.type=='grade') {
+    else if (data.type == 'grade') {
       Materialize.toast('You Program is Graded', 4000)
-      index = app.submits.findIndex(o=>o.time==data.time)
-      app.submits[index].status='graded'
-      app.submits[index].grade=data.grade
+      index = app.submits.findIndex(o => o.time == data.time)
+      app.submits[index].status = 'graded'
+      app.submits[index].grade = data.grade
     }
   }
 
@@ -153,27 +154,55 @@
 
   <button class="waves-effect waves-light btn red accent-2" id="upload" onclick="Upload()">Submit</button>
 
-  
-    
-        <div v-for="submit in submits">
-            <!-- <p>{{time}}</p> -->
-            <p>status:{{submit.status}}</p>
-            <div v-if="submit.status=='graded'">
-              <span v-for="(v,k) in submit.grade">({{k}},{{v}}) </span>
-            </div>
-          
-   
+
+  <ul class="collapsible popout" data-collapsible="accordion">
+    <li v-for="(submit,index) in submits">
+      <div class="collapsible-header">
+        <span style="width:60%;">time:{{moment(submit.time).format("HH:mm:ss")}}</span>
+        <span style="width:20%">(status:{{submit.status}})</span>
+        <span style="width:20%;float:right;text-align:right">mark:{{(submit.grade?submit.grade.mark:0)}}</span>
+      </div>
+      <div class="collapsible-body">
+        <span>Details</span>
+        <div v-if="!submit.grade">N/A</div>
+        <table class="striped">
+          <thead>
+            <tr>
+              <th v-for="(v,k) in submit.grade">{{k}}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td v-for="(v,k) in submit.grade">{{v}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </li>
+  </ul>
+
+
+  <!-- <div v-for="submit in submits">
+    <p>time:{{submit.time}} status:{{submit.status}}</p>
+    <div v-if="submit.status=='graded'">
+      <span v-for="(v,k) in submit.grade">({{k}},{{v}}) </span>
+    </div> -->
+
+
 </div>
-  
-  
+
+
 
 </div>
 
 <script>
   app = new Vue({
-    el:"#app",
-    data:{
-      submits:[]
+    el: "#app",
+    data: {
+      submits: []
+    },
+    methods: {
+      moment: moment
     }
   })
 </script>
