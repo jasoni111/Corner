@@ -90,9 +90,9 @@
 
   var FetchUser = (name,callback)=>{
     ref = firebase.database().ref("users/"+name)
-    ref.on("value", function (snapshot) {
+    ref.once("value").then(function (snapshot) {
       console.log(snapshot.val());
-      callback(snapshot.val())
+      if(callback)callback(snapshot.val())
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
     });
