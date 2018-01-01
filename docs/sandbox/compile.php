@@ -47,8 +47,7 @@ function compile($name){
   exec("g++ main.cpp -std=c++11",$r,$c);
   if($c!=0)exit("{name:'$name',error:'compilation error with exit code $c'}");
   
-  execute("img/0001.bmp");
-  $mark = mark();
+  execute("img/0037.bmp");
 
   $output = [
     "name"=>$name,

@@ -8,6 +8,7 @@
  */
 
 answers = false
+debug = false
 
 $.ajax({
   url:'ans/ans.json',
@@ -19,9 +20,18 @@ $.ajax({
 })
 
 Grade = (data)=>{
-  results = Parse(data)
-
-  skygear.pubsub.publish(name, JSON.stringify(data))
+  console.log('grade',data)
+  results = Parse(data.result)
+  console.log('parsed result',results)
+  marks = 0
+  results.forEach(photo=>{
+    debug = photo
+    edges = Pair(photo.corners,answers[photo.name])
+    console.log('paired edges',edges)
+    marks += edges.reduce((value,edge)=>{return value+GradePair(edge[0],edge[1])},0)
+  })
+  console.log(marks)
+  skygear.pubsub.publish(data.name, marks)
 }
 
 /**
@@ -40,6 +50,7 @@ Grade = (data)=>{
  * 
  */
 Parse = (data)=>{
+  console.log(data)
   photo_results = []
   photo_strings = data.split(/\n/g).filter(s=>{return s!=''})
   console.log(photo_strings)
@@ -71,14 +82,14 @@ Pair = (res_,ans_)=>{
   res.forEach((A,a_i)=>{
     A.mark_list=[]
     ans.forEach((B,b_i)=>{
-      A.mark_list.push({point:B,mark:Grade(A,B)})
+      A.mark_list.push({point:B,mark:GradePair(A,B)})
     })
     A.mark_list.sort((a,b)=>{return b.mark-a.mark}) //large to small
   })
   ans.forEach((A,a_i)=>{
     A.mark_list=[]
     res.forEach((B,b_i)=>{
-      A.mark_list.push({point:B,mark:Grade(A,B)})
+      A.mark_list.push({point:B,mark:GradePair(A,B)})
     })
     A.mark_list.sort((a,b)=>{return b.mark-a.mark}) //large to small
   })
@@ -123,7 +134,7 @@ Pair = (res_,ans_)=>{
 /**
  * grade the point with answer point
  */
-Grade = (res_pt,ans_pt)=>{
+GradePair = (res_pt,ans_pt)=>{
   dist = Dist(res_pt,ans_pt)
   if(dist<4)return 10         //perfect
   else if(dist<9)return 6     //great
