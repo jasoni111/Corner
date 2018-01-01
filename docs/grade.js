@@ -9,6 +9,15 @@
 
 answers = false
 
+scheme = {
+  perfect:10,
+  great:6,
+  good:3,
+  bad:1,
+  miss:-5,
+  extra:-5
+}
+
 $.ajax({
   url:'ans/ans.json',
   success:data=>{
@@ -21,14 +30,30 @@ $.ajax({
 Grade = (data)=>{
   results = Parse(data.result)
   console.log('parsed result',results)
-  marks = 0
+  grade = {
+    perfect:0,
+    great:0,
+    good:0,
+    bad:0,
+    miss:0,
+    extra:0
+  }
+  mark = 0
   results.forEach(photo=>{
     edges = Pair(photo.corners,answers[photo.name])
     photo.edges = edges
-    marks += edges.reduce((value,edge)=>{return value+GradePair(edge[0],edge[1])},0)
+    classified = edges.map(edge=>ClassifyEdge(edge))
+    classified.forEach(c=>{grade[c]++})
+    extra = photo.length - answers[photo.name].length
+    if(extra>0)grade.extra+=extra
+    else grade.miss-=extra
   })
-  console.log(marks,results)
-  skygear.pubsub.publish(data.name, marks)
+  for(var k in grade){
+    mark+=grade[k]*scheme[k]
+  }
+  grade.mark = mark
+  console.log(grade,results)
+  skygear.pubsub.publish(data.name, grade)
 }
 
 /**
@@ -127,14 +152,14 @@ Pair = (res_,ans_)=>{
 
 
 /**
- * grade the point with answer point
+ * classify the point with answer point
  */
-GradePair = (res_pt,ans_pt)=>{
+ClassifyEdge = ([res_pt,ans_pt])=>{
   dist = Dist(res_pt,ans_pt)
-  if(dist<4)return 10         //perfect
-  else if(dist<9)return 6     //great
-  else if(dist<16)return 3    //good
-  else return 1               //bad
+  if(dist<4)return "perfect"
+  else if(dist<9)return "great"
+  else if(dist<16)return "good"
+  else return "bad"
 }
 
 Dist = (A,B) =>{
