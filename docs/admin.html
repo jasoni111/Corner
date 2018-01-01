@@ -4,6 +4,8 @@
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
 
+<script src="grade.js"></script>
+
 <!--Skygear configuration-->
 <!--The app end point and the api key can be found in the developer portal-->
 <script>
@@ -87,13 +89,13 @@
         url: `sandbox/compile.php?name=${name}&url=${btoa(url)}`,
         success: (data) => {
           console.log('compile done', data)
-          skygear.pubsub.publish(name, JSON.stringify(data))
           if(queue.length>0){
             CompileSingle()
           }
           else{
             compiling = false
           }
+          Grade(data)
         }
       })
     }).catch(function (error) {

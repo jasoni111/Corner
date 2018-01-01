@@ -1,5 +1,4 @@
 <?php
-require "marker.php";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $error="";
   $name = test_input($_POST["file_name"]);
@@ -53,7 +52,7 @@ function compile($name){
 
   $output = [
     "name"=>$name,
-    "mark"=>$mark
+    "result"=>LoadFile()
   ];
   echo json_encode($output);
   die();
@@ -68,4 +67,9 @@ function execute($arg){
   }
   if($c!=0)exit("{name:'$name',error:'run time error with exit code $c'}");
   return $r;
+}
+
+function LoadFile(){
+  $myfile = fopen("result.txt", "r") or die("Unable to open file!");
+  return fread($myfile,filesize("result.txt"));
 }
