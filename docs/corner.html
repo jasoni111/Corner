@@ -1,25 +1,82 @@
 <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.js"></script>
 <style>
-canvas  
- { background-image: url("sandbox/img/0037.bmp"); }
+  canvas {
+    background-image: url("sandbox/img/0037.bmp");
+  }
 </style>
 <div id="app">
-  <canvas onclick="Click(event)"></canvas>
-  <p>img name:</p>
-  <input type="text" value="sandbox/img/0037.bmp" onchange="app.src = this.value">
-  <textarea></textarea>
+  <table width="100%">
+    <tr width="100%">
+      <td width="640px" height="480px">
+        <canvas width="640px" height="480px" onclick="Click(event)" :style="`background-image: url('${src}')`"></canvas>
+      </td>
+      <td>
+        <p>img name:
+          <input type="text" value="sandbox/img/0001.bmp" onchange="LoadPicture()">
+          <button onclick="Next()">next picture</button>
+          <button onclick="LoadPicture()">load picture</button>
+        </p>
+        <p>
+          <button onclick="points[app.src]=[];$('textarea')[0].value = JSON.stringify(points, null, 4)">reset this photo</button>
+        </p>
+        output:
+        <br>
+        <textarea rows="24" cols="70"></textarea>
+        <div>
+          <button onclick="points=JSON.parse($('textarea')[0].value);LoadPicture()">Load this JSON</button>
+        </div>
+      </td>
+    </tr>
+  </table>
+  <h3>Manual Input Corners</h3>
+  <p>input the path string in the input box, click "load picture" button to load the picture. Click the corner in the picture
+    to add corner. If added faulty corner, you can click reset picture, or remove the point in the JSON RHS, and then click
+    "load this JSON". you can click "n" on your keyboard to go to next picture</p>
 </div>
 
 <script>
 
-  points = []
+  points = {}
 
-  Click = (e)=>{
+  Output = () => {
+    $('textarea')[0].value = JSON.stringify(points, null, 4)
+  }
+
+  Click = (e) => {
     x = e.clientX
     y = e.clientY
-    points.push([x,y])
-    $('textarea')[0].innerText = JSON.stringify(points)
+    points[app.src].push([x, y])
+    Draw([x, y])
+    Output()
+    $('textarea')[0].scrollTop = 99999
+  }
+
+  LoadPicture = () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    app.src = $('input')[0].value
+    if (!(app.src in points)) {
+      points[app.src] = []
+    }
+    else {
+      points[app.src].forEach(p => Draw(p))
+    }
+    Output()
+  }
+
+  Draw = ([x, y]) => {
+    ctx.beginPath();
+    ctx.fillStyle = "#FF0000"
+    ctx.fillRect(x, y, 3, 3)
+  }
+
+  Next = () => {
+    current = $('input')[0].value
+    next = '0' + String(Number(current.match(/[1-9][0-9]*/g)) + 1)
+    while (next.length < 4) next = '0' + next
+    next = current.replace(/[0-9]+/g, next)
+    $('input')[0].value = next
+    LoadPicture()
   }
 
   var canvas = $('canvas')[0]
@@ -27,4 +84,20 @@ canvas
 
   canvas.width = 640
   canvas.height = 480
+
+  document.addEventListener('keydown', function (event) {
+    console.log(event.keyCode)
+    if (event.keyCode == 78) {
+      Next()
+    }
+  })
+
+  app = new Vue({
+    el: "#app",
+    data: {
+      src: "sandbox/img/0001.bmp"
+    }
+  })
+
+  LoadPicture()
 </script>
