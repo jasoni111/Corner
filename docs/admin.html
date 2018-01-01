@@ -88,6 +88,20 @@
     });
   }
 
+  var FetchUser = (name,callback)=>{
+    ref = firebase.database().ref("users/"+name)
+    ref.on("value", function (snapshot) {
+      console.log(snapshot.val());
+      callback(snapshot.val())
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
+    });
+  }
+
+  var SaveUser = (name,obj)=>{
+    firebase.database().ref('users/' + name).set(obj)
+  }
+
   var CompileSingle = () => {
     var {name:name,time:time} = queue.shift()
     compiling = true
@@ -105,6 +119,13 @@
             compiling = false
           }
           grade = Grade(JSON.parse(data))
+          FetchUser(name,(user)=>{
+            if(user.mark&&user.mark>grade.mark)return
+            user.mark=grade.mark
+            user.grade=grade
+            user.grade_time = time
+            SaveUser(name,user)
+          })
           skygear.pubsub.publish(name, {type:'grade',time:time,grade:grade})
         }
       })

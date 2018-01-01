@@ -14,7 +14,7 @@ scheme = {
   great:6,
   good:3,
   bad:1,
-  miss:-5,
+  miss:-1,
   extra:-5
 }
 

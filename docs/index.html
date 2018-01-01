@@ -51,7 +51,9 @@
     skygear.auth.signupWithUsername(name, pw)
       .then((user) => {
         console.log(user)
-
+        firebase.database().ref('users/' + name).set({
+          username: name
+        })
         LoginSuccess(name, callback)
       },
       (error) => {
@@ -91,10 +93,6 @@
       var fileRef = storageRef.child(`files/${name}.cpp`);
       fileRef.put(cppfile).then(function (snapshot) {
 
-        firebase.database().ref('users/' + name).set({
-          username: name,
-          marks: 0
-        })
         console.log('Uploaded a blob or file!');
         let time = new Date()
         time = time.toISOString()
