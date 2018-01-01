@@ -1,9 +1,44 @@
+/**
+ * grade.js
+ * 
+ * Corner Dectection Grader
+ * Author: Dipsy
+ * 
+ * Created on 2017-12-31
+ */
+
+answers = false
+
+$.ajax({
+  url:'ans/ans.json',
+  success:data=>{
+    answers = data
+  }
+}).catch(function (error) {
+  console.log(error)
+})
+
 Grade = (data)=>{
   results = Parse(data)
 
   skygear.pubsub.publish(name, JSON.stringify(data))
 }
 
+/**
+ * Parse the result: given a string from result.txt
+ * <image name1> <corner count> <corner1 x> <corner1 y> \n
+ * <image name2> <corner count> <corner1 x> <corner1 y> \n...
+ * 
+ * return:
+ * [
+ * {
+ * name:<path to corresponding image file>
+ * length:<length of corner list>
+ * corners:[[<x>,<y>],[<x>,<y>]]
+ * }
+ * ]
+ * 
+ */
 Parse = (data)=>{
   photo_results = []
   photo_strings = data.split(/\n/g).filter(s=>{return s!=''})
@@ -24,8 +59,13 @@ Parse = (data)=>{
 /**
  * pair two sets of points to maximize grade
  * using stable marriage, which is programmer's view on marriage lol
+ * 
+ * return edges connecting the point to paired point
+ * no edges means no matching edge
  */
-Pair = (res,ans)=>{
+Pair = (res_,ans_)=>{
+  res= res_.slice()
+  ans= ans_.slice()
   res.forEach((r,i)=>{r.index=i})
   ans.forEach((r,i)=>{r.index=i})
   res.forEach((A,a_i)=>{
@@ -45,6 +85,7 @@ Pair = (res,ans)=>{
   A_single = ans.slice()
   B_single = res.slice()
   A_forever_single = []
+  edges = []
   while(A_single.length!=0){
     //A perpose to his most desire:
     //if B's current husband is less desire than A, take over the position that B's husband become single
@@ -55,11 +96,14 @@ Pair = (res,ans)=>{
       B = A.mark_list[i].point
       if(!B.link){
         //B is available
+        edges.push([B,A])
         B.link=A
         A.link=B
         B_single.splice(B_single.indexOf(B))
         break
       }else if(B.mark_list.findIndex(o=>o.point==A)<B.mark_list.findIndex(o=>o.point==B.link)){
+        edges.splice(edges.indexOf([B,B.link]))
+        edges.push([B,A])
         A_single.push(B.link)
         delete B.link.link
         B.link=A
@@ -72,10 +116,7 @@ Pair = (res,ans)=>{
       A_forever_single.push(A)
     }
   }
-  return {
-    a_still_single:A_forever_single,
-    b_still_single:B_single
-  }
+  return edges.map(edge=>{return edge.map(pt=>{return [pt[0],pt[1]]})})
 }
 
 
