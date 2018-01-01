@@ -1,0 +1,83 @@
+<script src="https://code.skygear.io/js/polyfill/latest/polyfill.min.js"></script>
+<script src="https://code.skygear.io/js/skygear/latest/skygear.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.8.1/firebase.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/css/materialize.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
+<script src="https://vuejs.org/js/vue.js"></script>
+<script src="js/moment.min.js"></script>
+
+<title>Scores | Corner Detection Challenge</title>
+
+<div id='app' class="Container">
+  <h3>Corner Detection Challenge - Scores</h3>
+  <table class="striped">
+    <thead>
+      <tr>
+        <th>name</th>
+        <th>time</th>
+        <th>mark</th>
+        <th>perfect</th>
+        <th>great</th>
+        <th>good</th>
+        <th>bad</th>
+        <th>miss</th>
+        <th>extra</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="user in users">
+        <td>{{user.username}}</td>
+        <td>{{moment(user.grade_time).format('HH:mm:ss')}}</td>
+        <td>{{user.mark}}</td>
+        <td>{{user.grade.perfect}}</td>
+        <td>{{user.grade.great}}</td>
+        <td>{{user.grade.good}}</td>
+        <td>{{user.grade.bad}}</td>
+        <td>{{user.grade.miss}}</td>
+        <td>{{user.grade.extra}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  var app = new Vue({
+    el: '#app',
+    data: {
+      users: []
+    }
+  })
+  var compiling = false
+  var queue = []
+
+  var config = {
+    apiKey: "AIzaSyDeXslekRSxKlQzvdS3b908i18s1Ztg5ak",
+    authDomain: "corner-ch.firebaseapp.com",
+    databaseURL: "https://corner-ch.firebaseio.com",
+    projectId: "corner-ch",
+    storageBucket: "gs://corner-ch.appspot.com",
+    messagingSenderId: "202391887409",
+
+    rules: {
+      ".read": true,
+      ".write": true
+    }
+  };
+  firebase.initializeApp(config);
+  var storage = firebase.storage();
+  var storageRef = storage.ref();
+
+  ref = firebase.database().ref("users")
+  ref.on("value", function (snapshot) {
+    console.log(snapshot.val());
+    let _users = snapshot.val()
+    users = []
+    for (k in _users) {
+      users.push(_users[k])
+    }
+    app.users = users.filter(u => ('grade' in u)).sort((a, b) => moment(b.grade_time).isBefore(a.grade_time)).sort((a, b) => b.mark - a.mark)
+  }, function (errorObject) {
+    console.log("The read failed: " + errorObject.code);
+  });
+</script>

@@ -8,11 +8,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.5.13/vue.min.js"></script>
 <script src="js/moment.min.js"></script>
 
-
 <script src="grade.js"></script>
 
-<!--Skygear configuration-->
-<!--The app end point and the api key can be found in the developer portal-->
+<title>Admin Panel - Corner Detection Challenge</title>
+
 <script>
 
   var users = {}
