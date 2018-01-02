@@ -70,7 +70,7 @@
             <td>{{moment(submit.compile_time).format('HH:mm:ss')}}</td>
             <td>{{moment(submit.grade_time).format('HH:mm:ss')}}</td>
             <td>
-              <button class="waves-effect waves-light btn" :onclick="`ViewDetail('${k}')`">Details</button>
+              <button class="waves-effect waves-light btn" v-on:click="ViewDetail(k)">Details</button>
             </td>
           </tr>
         </tbody>
@@ -80,20 +80,21 @@
   <div id="detail" class="modal">
     <div class="modal-content">
       <h3>Detail</h3>
-      <table v-if="detail_index">
+      <table v-if="typeof detail_index === 'number'">
         <thead>
           <tr>
             <th>name</th>
             <th>time</th>
             <th>compile time</th>
             <th>grade time</th>
-            <th>mark</th>
-            <th>perfect</th>
-            <th>great</th>
-            <th>good</th>
-            <th>bad</th>
-            <th>miss</th>
-            <th>extra</th>
+            <th v-if="detail.grade">mark</th>
+            <th v-if="detail.grade">perfect</th>
+            <th v-if="detail.grade">great</th>
+            <th v-if="detail.grade">good</th>
+            <th v-if="detail.grade">bad</th>
+            <th v-if="detail.grade">miss</th>
+            <th v-if="detail.grade">extra</th>
+            <th v-if="detail.error">error</th>
           </tr>
         </thead>
         <tbody>
@@ -102,16 +103,18 @@
             <td>{{moment(detail.time).format('HH:mm:ss')}}</td>
             <td>{{moment(detail.compile_time).format('HH:mm:ss')}}</td>
             <td>{{moment(detail.grade_time).format('HH:mm:ss')}}</td>
-            <td>{{detail.grade.mark}}</td>
-            <td>{{detail.grade.perfect}}</td>
-            <td>{{detail.grade.great}}</td>
-            <td>{{detail.grade.good}}</td>
-            <td>{{detail.grade.bad}}</td>
-            <td>{{detail.grade.miss}}</td>
-            <td>{{detail.grade.extra}}</td>
+            <td v-if="detail.grade">{{detail.grade.mark}}</td>
+            <td v-if="detail.grade">{{detail.grade.perfect}}</td>
+            <td v-if="detail.grade">{{detail.grade.great}}</td>
+            <td v-if="detail.grade">{{detail.grade.good}}</td>
+            <td v-if="detail.grade">{{detail.grade.bad}}</td>
+            <td v-if="detail.grade">{{detail.grade.miss}}</td>
+            <td v-if="detail.grade">{{detail.grade.extra}}</td>
+            <td v-if="detail.error">{{detail.error}}</td>
           </tr>
         </tbody>
       </table>
+      
     </div>
     <div class="modal-footer">
       <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
@@ -133,21 +136,20 @@
       detail_index: false
     },
     methods: {
-      moment: moment
+      moment: moment,
+      ViewDetail(index) {
+        this.detail_index = index
+        $('#detail').modal('open')
+      }
     },
     computed: {
       detail() {
-        if (this.detail_index)
+        if (typeof this.detail_index === "number")
           return this.compiled[this.detail_index]
         return {}
       }
     }
   })
-
-  var ViewDetail = (index) => {
-    app.detail_index = index
-    $('#detail').modal('open')
-  }
 
   var config = {
     apiKey: "AIzaSyDeXslekRSxKlQzvdS3b908i18s1Ztg5ak",
@@ -191,6 +193,7 @@
 
   var Push = (item) => {
     app.queue.push(item)
+    firebase.database().ref('admin/queue').set(app.queue)
     if (!compiling) {
       CompileSingle()
     }
@@ -214,6 +217,23 @@
     ref.on("value", function (snapshot) {
       console.log(snapshot.val());
       users = snapshot.val()
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
+    });
+    ref = firebase.database().ref("admin/queue")
+    ref.once("value").then( function (snapshot) {
+      console.log(snapshot.val());
+      app.queue = snapshot.val()||[]
+      if(app.queue.length>0){
+        CompileSingle()
+      }
+    }, function (errorObject) {
+      console.log("The read failed: " + errorObject.code);
+    });
+    ref = firebase.database().ref("admin/compiled")
+    ref.once("value").then( function (snapshot) {
+      console.log(snapshot.val());
+      app.compiled = JSON.parse(snapshot.val())||[]
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
     });
@@ -245,18 +265,19 @@
       $.ajax({
         url: `sandbox/compile.php?name=${name}&url=${btoa(url)}`,
         success: (data) => {
+          data = JSON.parse(data)
           console.log('compile done', data)
           app.compiling.grade_time = moment()
-          if ('error' in JSON.parse(data)) {
-            console.log('error', JSON.parse(data))
-            skygear.pubsub.publish(name, { type: 'grade', time: time, error: JSON.parse(data).error })
-            app.compiling.error = JSON.parse(data).error
+          if ('error' in data) {
+            console.log('error', data)
+            skygear.pubsub.publish(name, { type: 'grade', time: time, error: data.error })
+            app.compiling.error = data.error
             let temp = {}
             Object.assign(temp,app.compiling)
             app.compiled.splice(0, 0, temp)
           }
           else {
-            grade = Grade(JSON.parse(data))
+            grade = Grade(data)
             FetchUser(name, (user) => {
               if (user.mark && user.mark > grade.mark) return
               user.mark = grade.mark
@@ -274,6 +295,10 @@
             app.compiled.splice(0, 0, temp)
           }
           app.compiling=false
+          console.log(app.queue)
+          console.log(app.compiled)
+          firebase.database().ref('admin/queue').set(app.queue)
+          firebase.database().ref('admin/compiled').set(JSON.stringify(app.compiled))
           if (app.queue.length > 0) {
             CompileSingle()
           }
