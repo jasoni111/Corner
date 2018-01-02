@@ -9,21 +9,21 @@
 
 <title>Scores | Corner Detection Challenge</title>
 <nav>
-    <div class="nav-wrapper">
-      <div class="container">
-        <a href="#" class="brand-logo">Corner Detection Challenge</a>
-        <ul id="nav-mobile" class="right hide-on-med-and-down">
-          <li>
-            <a href="index.html">Submit</a>
-          </li>
-          <li>
-            <a onclick="$('#announcements').modal('open')">Annoucements</a>
-          </li>
-        </ul>
-      </div>
-  
+  <div class="nav-wrapper">
+    <div class="container">
+      <a href="#" class="brand-logo">Corner Detection Challenge</a>
+      <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li>
+          <a href="index.html">Submit</a>
+        </li>
+        <li>
+          <a onclick="$('#announcements').modal('open')">Annoucements</a>
+        </li>
+      </ul>
     </div>
-  </nav>
+
+  </div>
+</nav>
 <div id='app' class="Container">
   <h3>Corner Detection Challenge - Scores</h3>
   <table class="striped">
@@ -57,24 +57,24 @@
     </tbody>
   </table>
   <div id="announcements" class="modal">
-      <div class="modal-content">
-        <table>
-          <thead>
-            <th>time</th>
-            <th>announcement</th>
-          </thead>
-          <tbody>
-            <tr v-for="a in announcements">
-              <td>{{a.time}}</td>
-              <td>{{a.announce}}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="modal-footer">
-        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
-      </div>
+    <div class="modal-content">
+      <table>
+        <thead>
+          <th>time</th>
+          <th>announcement</th>
+        </thead>
+        <tbody>
+          <tr v-for="a in announcements">
+            <td>{{a.time}}</td>
+            <td>{{a.announce}}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -82,10 +82,10 @@
     el: '#app',
     data: {
       users: [],
-      announcements:[]
+      announcements: []
     },
-    methods:{
-      moment:moment
+    methods: {
+      moment: moment
     }
   })
   var compiling = false
@@ -120,7 +120,7 @@
   }, function (errorObject) {
     console.log("The read failed: " + errorObject.code);
   });
-  firebase.database().ref("admin/announcements").on("value",(snapshot)=>{
+  firebase.database().ref("admin/announcements").on("value", (snapshot) => {
     app.announcements = snapshot.val()
   })
 

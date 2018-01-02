@@ -15,10 +15,13 @@
 <div id="app">
   <h2>Admin Panel</h2>
   <div class="row">
-  <div class="input-field col s6">
+    <a class="waves-effect waves-light btn" onclick="$('#announcements').modal('open')">View All Announcements</a>
+    <div class="input-field col s6">
       <input id="announce" type="text" class="validate">
       <label for="announce">announce</label>
-    </div>  <button class="waves-effect waves-light btn" onclick="Announce()">Announce</button></div>
+    </div>
+    <button class="waves-effect waves-light btn" onclick="Announce()">Announce</button>
+  </div>
   <div class="row">
     <div class="col s3">
       <h5>Compile Queue</h5>
@@ -125,6 +128,25 @@
       <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
     </div>
   </div>
+  <div id="announcements" class="modal">
+    <div class="modal-content">
+      <table>
+        <thead>
+          <th>time</th>
+          <th>announcement</th>
+        </thead>
+        <tbody>
+          <tr v-for="a in announcements">
+            <td>{{a.time}}</td>
+            <td>{{a.announce}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -139,7 +161,7 @@
       compiling: false,
       compiled: [],
       detail_index: false,
-      announcements:[]
+      announcements: []
     },
     methods: {
       moment: moment,
@@ -157,10 +179,10 @@
     }
   })
 
-  var Announce = ()=>{
+  var Announce = () => {
     let announce = $('#announce')[0].value
-    app.announcements.push({time:moment(),announce:announce})
-    skygear.pubsub.publish('announce',announce)
+    app.announcements.push({ time: moment(), announce: announce })
+    skygear.pubsub.publish('announce', announce)
     firebase.database().ref('admin/announcements').set(JSON.parse(JSON.stringify(app.announcements)))
   }
 
@@ -234,22 +256,25 @@
       console.log("The read failed: " + errorObject.code);
     });
     ref = firebase.database().ref("admin/queue")
-    ref.once("value").then( function (snapshot) {
+    ref.once("value").then(function (snapshot) {
       console.log(snapshot.val());
-      app.queue = snapshot.val()||[]
-      if(app.queue.length>0){
+      app.queue = snapshot.val() || []
+      if (app.queue.length > 0) {
         CompileSingle()
       }
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
     });
     ref = firebase.database().ref("admin/compiled")
-    ref.once("value").then( function (snapshot) {
+    ref.once("value").then(function (snapshot) {
       console.log(snapshot.val());
-      app.compiled = JSON.parse(snapshot.val())||[]
+      app.compiled = JSON.parse(snapshot.val()) || []
     }, function (errorObject) {
       console.log("The read failed: " + errorObject.code);
     });
+    firebase.database().ref("admin/announcements").once("value").then((snapshot) => {
+      app.announcements = snapshot.val() || []
+    })
   }
 
   var FetchUser = (name, callback) => {
@@ -267,11 +292,11 @@
   }
 
   var CompileSingle = () => {
-    if(app.queue.length==0)return
+    if (app.queue.length == 0) return
     var { name: name, time: time } = app.queue.shift()
     compiling = true
     app.compiling = { name: name, time: time, compile_time: moment() }
-    console.log('compiling',app.compiling)
+    console.log('compiling', app.compiling)
     console.log(`start compile ${name}`)
     storageRef.child(`files/${name}/${btoa(time)}.cpp`).getDownloadURL().then(function (url) {
       console.log('cpp url', url)
@@ -286,7 +311,7 @@
             skygear.pubsub.publish(name, { type: 'grade', time: time, error: data.error })
             app.compiling.error = data.error
             let temp = {}
-            Object.assign(temp,app.compiling)
+            Object.assign(temp, app.compiling)
             app.compiled.splice(0, 0, temp)
           }
           else {
@@ -307,7 +332,7 @@
             }
             app.compiled.splice(0, 0, temp)
           }
-          app.compiling=false
+          app.compiling = false
           console.log(app.queue)
           console.log(app.compiled)
           firebase.database().ref('admin/queue').set(app.queue)
