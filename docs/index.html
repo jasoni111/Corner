@@ -150,6 +150,8 @@
         Materialize.toast('You Program is Graded', 4000)
         app.submits[index].status = 'graded'
         app.submits[index].grade = data.grade
+        app.submits[index].compile_duration = data.compile_duration
+        app.submits[index].runtime_duration = data.runtime_duration
       }
       firebase.database().ref('users/' + login_user).update({ submits: app.submits })
     }

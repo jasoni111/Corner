@@ -95,6 +95,8 @@
             <th>time</th>
             <th>compile time</th>
             <th>grade time</th>
+            <th v-if="detail.compile_duration">compile duration</th>
+            <th v-if="detail.runtime_duration">run time</th>
             <th v-if="detail.grade">mark</th>
             <th v-if="detail.grade">perfect</th>
             <th v-if="detail.grade">great</th>
@@ -111,6 +113,8 @@
             <td>{{moment(detail.time).format('HH:mm:ss')}}</td>
             <td>{{moment(detail.compile_time).format('HH:mm:ss')}}</td>
             <td>{{moment(detail.grade_time).format('HH:mm:ss')}}</td>
+            <td v-if="detail.compile_duration">{{detail.compile_duration}}</td>
+            <td v-if="detail.runtime_duration">{{detail.runtime_duration}}</td>
             <td v-if="detail.grade">{{detail.grade.mark}}</td>
             <td v-if="detail.grade">{{detail.grade.perfect}}</td>
             <td v-if="detail.grade">{{detail.grade.great}}</td>
@@ -303,18 +307,20 @@
       $.ajax({
         url: `sandbox/compile.php?name=${name}&url=${btoa(url)}`,
         success: (data) => {
-          data = JSON.parse(data)
           console.log('compile done', data)
+          data = JSON.parse(data)
           app.compiling.grade_time = moment()
           if ('error' in data) {
             console.log('error', data)
-            skygear.pubsub.publish(name, { type: 'grade', time: time, error: data.error })
+            skygear.pubsub.publish(name, { type: 'grade', time: time, error: data.error})
             app.compiling.error = data.error
             let temp = {}
             Object.assign(temp, app.compiling)
             app.compiled.splice(0, 0, temp)
           }
           else {
+            app.compiling.compile_duration = data.compile_duration
+            app.compiling.runtime_duration = data.runtime_duration
             grade = Grade(data)
             FetchUser(name, (user) => {
               if (user.mark && user.mark > grade.mark) return
@@ -323,7 +329,7 @@
               user.grade_time = time
               SaveUser(name, user)
             })
-            skygear.pubsub.publish(name, { type: 'grade', time: time, grade: grade })
+            skygear.pubsub.publish(name, { type: 'grade', time: time, grade: grade, compile_duration:data.compile_duration,runtime_duration:data.runtime_duration })
             app.compiling.grade = grade
             let temp = {}
             //Object.assign(temp,app.compiling)

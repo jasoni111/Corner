@@ -47,16 +47,24 @@ function compile($name){
     unlink("result.txt");
   }
   
+  $compile_time = -time();
   exec("g++ main.cpp -std=c++11",$r,$c);
   if($c!=0)exit('{"name":"'.$name.'","error":"compilation error with exit code '.$c.'"}');
-  
+  $compile_time += time();
+
+  $total_run_time = 0;
   foreach(GenList() as $k=>$v){
+    $run_time = -time();
     execute($v);
+    $run_time += time();
+    $total_run_time += $run_time;
   }
 
   $output = [
     "name"=>$name,
-    "result"=>LoadFile()
+    "result"=>LoadFile(),
+    "compile_duration"=>$compile_time,
+    "runtime_duration"=>$total_run_time
   ];
   echo json_encode($output);
   die();
@@ -69,7 +77,7 @@ function execute($arg){
   else{
     exec("a.exe",$r,$c);
   }
-  if($c!=0)exit('{"name":"'.$name.'","error":"run time error with exit code '.$c.'"}');
+  if($c!=0)exit('{"name":"'.$_GET["name"].'","error":"run time error with exit code '.$c.'"}');
   return $r;
 }
 
