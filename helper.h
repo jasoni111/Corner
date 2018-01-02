@@ -104,9 +104,9 @@ int8_t getPixel(std::vector<uint8_t> img, int x, int y, int w, int h) {
  * @param cornerc  Corner count
  * @param cornerv  Corner coordinates vector
  */
-void printResult(std::string filename, int cornerc, std::vector< std::pair<int, int> > cornerv) {
+void printResult(std::string filename, int cornerc, std::vector< std::pair<int, int> > cornerv, std::string output_filename="result.txt") {
   std::fstream f;
-  f.open("result.txt", std::fstream::out | std::fstream::app); // append
+  f.open(output_filename, std::fstream::out | std::fstream::app); // append
   f << filename << " "; // prints filename
   f << cornerc << " "; // prints corner count
   for (const auto& corner : cornerv)

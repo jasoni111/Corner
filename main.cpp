@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
 
 	// END OF IMPLEMENTATION
 
-	printResult(filename, cornerc, cornerv);
+	printResult(filename, cornerc, cornerv,std::string(argv[0])+".txt");
 
 	return 0;
 }

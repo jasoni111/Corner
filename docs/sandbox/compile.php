@@ -27,7 +27,7 @@ else if($_SERVER["REQUEST_METHOD"] == "GET"){
   }
   $url = base64_decode($_GET["url"]);
   $name = $_GET["name"];
-  file_put_contents("main.cpp", fopen($url, 'r'));
+  file_put_contents("$name.cpp", fopen($url, 'r'));
   compile($name);
 }
 else{
@@ -43,26 +43,26 @@ function test_input($data) {
 }
 
 function compile($name){
-  if(file_exists("result.txt")){
-    unlink("result.txt");
+  if(file_exists("$name.exe.txt")){
+    unlink("$name.exe.txt");
   }
   
   $compile_time = -time();
-  exec("g++ main.cpp -std=c++11",$r,$c);
-  if($c!=0)exit('{"name":"'.$name.'","error":"compilation error with exit code '.$c.'"}');
+  exec("g++ -o $name.exe $name.cpp -std=c++11",$r,$c);
+  if($c!=0)exit('{"name":"'.$name.'","error":"compilation error with exit code '.$c.', '.json_encode($r).'"}');
   $compile_time += time();
 
   $total_run_time = 0;
   foreach(GenList() as $k=>$v){
     $run_time = -time();
-    execute($v);
+    execute($name,$v);
     $run_time += time();
     $total_run_time += $run_time;
   }
 
   $output = [
     "name"=>$name,
-    "result"=>LoadFile(),
+    "result"=>LoadFile($name),
     "compile_duration"=>$compile_time,
     "runtime_duration"=>$total_run_time
   ];
@@ -70,20 +70,20 @@ function compile($name){
   die();
 }
 
-function execute($arg){
+function execute($name,$arg){
   if($arg){
-    exec("a.exe $arg",$r,$c);
+    exec("$name.exe $arg",$r,$c);
   }
   else{
-    exec("a.exe",$r,$c);
+    exec("$name.exe",$r,$c);
   }
   if($c!=0)exit('{"name":"'.$_GET["name"].'","error":"run time error with exit code '.$c.'"}');
   return $r;
 }
 
-function LoadFile(){
-  $myfile = fopen("result.txt", "r") or die("Unable to open file!");
-  return fread($myfile,filesize("result.txt"));
+function LoadFile($name){
+  $myfile = fopen("$name.exe.txt", "r") or die("Unable to open file!");
+  return fread($myfile,filesize("$name.exe.txt"));
 }
 
 function GenList(){
