@@ -6,8 +6,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 <script src="https://vuejs.org/js/vue.js"></script>
 <script src="js/moment.min.js"></script>
-<link rel="stylesheet"
-      href="css/prism.css">
+<link rel="stylesheet" href="css/prism.css">
 <script src="js/prism.js"></script>
 
 <title>Judging System | Corner Detection Challenge</title>
@@ -47,6 +46,10 @@
         clearTimeout(online_check)
       }
     });
+    skygear.pubsub.on('announce', (data) => {
+      app.announcements.push({ time: moment, announce: data })
+      alert(data)
+    });
   })
 
   var Login = (callback = null) => {
@@ -58,8 +61,8 @@
         console.log(user)
         LoginSuccess(name, callback)
         firebase.database().ref('users/' + name).set({
-      username: name
-    })
+          username: name
+        })
       },
       (error) => {
         skygear.auth.loginWithUsername(name, pw)
@@ -82,7 +85,7 @@
     firebase.database().ref('users/' + name).update({
       username: name
     })
-    
+
     ref = firebase.database().ref("users/" + name)
     ref.on("value", function (snapshot) {
       console.log(snapshot.val());
@@ -150,6 +153,10 @@
       }
       firebase.database().ref('users/' + login_user).update({ submits: app.submits })
     }
+    else if (data.type == 'announce') {
+      app.announcements.push({ time: moment, announce: data.announce })
+      alert(data.announce)
+    }
   }
 
   ShowCpp = (base64) => {
@@ -163,13 +170,29 @@
           console.log(data)
           Prism.highlightAll()
           $('#source_code').modal('open')
-          
+
         }
       })
     })
   }
 
 </script>
+<nav>
+  <div class="nav-wrapper">
+    <div class="container">
+      <a href="#" class="brand-logo">Corner Detection Challenge</a>
+      <ul id="nav-mobile" class="right hide-on-med-and-down">
+        <li>
+          <a href="scores.html">Scores</a>
+        </li>
+        <li>
+          <a onclick="$('#announcements').modal('open')">Annoucements</a>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</nav>
 <div id="app" class="container">
   <h3>Corner Detection Challenge Judging System</h3>
   <div class="row">
@@ -238,6 +261,25 @@
     </div>
   </div>
 
+  <div id="announcements" class="modal">
+    <div class="modal-content">
+      <table>
+        <thead>
+          <th>time</th>
+          <th>announcement</th>
+        </thead>
+        <tbody>
+          <tr v-for="a in announcements">
+            <td>{{a.time}}</td>
+            <td>{{a.announce}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
 
 </div>
 
@@ -249,7 +291,8 @@
   app = new Vue({
     el: "#app",
     data: {
-      submits: []
+      submits: [],
+      announcements: []
     },
     methods: {
       moment: moment

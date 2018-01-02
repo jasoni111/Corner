@@ -8,12 +8,28 @@
 <script src="js/moment.min.js"></script>
 
 <title>Scores | Corner Detection Challenge</title>
-
+<nav>
+    <div class="nav-wrapper">
+      <div class="container">
+        <a href="#" class="brand-logo">Corner Detection Challenge</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+          <li>
+            <a href="index.html">Submit</a>
+          </li>
+          <li>
+            <a onclick="$('#announcements').modal('open')">Annoucements</a>
+          </li>
+        </ul>
+      </div>
+  
+    </div>
+  </nav>
 <div id='app' class="Container">
   <h3>Corner Detection Challenge - Scores</h3>
   <table class="striped">
     <thead>
       <tr>
+        <th>rank</th>
         <th>name</th>
         <th>time</th>
         <th>mark</th>
@@ -26,7 +42,8 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="user in users">
+      <tr v-for="(user,k) in users">
+        <td>{{k+1}}</td>
         <td>{{user.username}}</td>
         <td>{{moment(user.grade_time).format('HH:mm:ss')}}</td>
         <td>{{user.mark}}</td>
@@ -39,13 +56,33 @@
       </tr>
     </tbody>
   </table>
+  <div id="announcements" class="modal">
+      <div class="modal-content">
+        <table>
+          <thead>
+            <th>time</th>
+            <th>announcement</th>
+          </thead>
+          <tbody>
+            <tr v-for="a in announcements">
+              <td>{{a.time}}</td>
+              <td>{{a.announce}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+      </div>
+    </div>
 </div>
 
 <script>
   var app = new Vue({
     el: '#app',
     data: {
-      users: []
+      users: [],
+      announcements:[]
     },
     methods:{
       moment:moment
@@ -83,4 +120,9 @@
   }, function (errorObject) {
     console.log("The read failed: " + errorObject.code);
   });
+  firebase.database().ref("admin/announcements").on("value",(snapshot)=>{
+    app.announcements = snapshot.val()
+  })
+
+  $('.modal').modal()
 </script>

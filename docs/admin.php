@@ -15,6 +15,11 @@
 <div id="app">
   <h2>Admin Panel</h2>
   <div class="row">
+  <div class="input-field col s6">
+      <input id="announce" type="text" class="validate">
+      <label for="announce">announce</label>
+    </div>  <button class="waves-effect waves-light btn" onclick="Announce()">Announce</button></div>
+  <div class="row">
     <div class="col s3">
       <h5>Compile Queue</h5>
       <table>
@@ -114,7 +119,7 @@
           </tr>
         </tbody>
       </table>
-      
+
     </div>
     <div class="modal-footer">
       <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
@@ -133,7 +138,8 @@
       queue: [],
       compiling: false,
       compiled: [],
-      detail_index: false
+      detail_index: false,
+      announcements:[]
     },
     methods: {
       moment: moment,
@@ -150,6 +156,13 @@
       }
     }
   })
+
+  var Announce = ()=>{
+    let announce = $('#announce')[0].value
+    app.announcements.push({time:moment(),announce:announce})
+    skygear.pubsub.publish('announce',announce)
+    firebase.database().ref('admin/announcements').set(JSON.parse(JSON.stringify(app.announcements)))
+  }
 
   var config = {
     apiKey: "AIzaSyDeXslekRSxKlQzvdS3b908i18s1Ztg5ak",
