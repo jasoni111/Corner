@@ -15,12 +15,12 @@
 <div id="app">
   <h2>Admin Panel</h2>
   <div class="row">
-    <a class="waves-effect waves-light btn" onclick="$('#announcements').modal('open')">View All Announcements</a>
+    <a class="waves-effect waves-light btn col s1" onclick="$('#announcements').modal('open')">View All Announcements</a>
     <div class="input-field col s6">
       <input id="announce" type="text" class="validate">
       <label for="announce">announce</label>
     </div>
-    <button class="waves-effect waves-light btn" onclick="Announce()">Announce</button>
+    <button class="waves-effect waves-light btn col s3" onclick="Announce()">Announce</button>
   </div>
   <div class="row">
     <div class="col s3">
@@ -51,10 +51,10 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="compiling && compiling!={}">
-            <td>{{compiling.name}}</td>
-            <td>{{moment(compiling.time).format('HH:mm:ss')}}</td>
-            <td>{{moment(compiling.compile_time).format('HH:mm:ss')}}</td>
+          <tr v-for="job in compiling">
+            <td>{{job.name}}</td>
+            <td>{{moment(job.time).format('HH:mm:ss')}}</td>
+            <td>{{moment(job.compile_time).format('HH:mm:ss')}}</td>
           </tr>
         </tbody>
       </table>
@@ -156,13 +156,13 @@
 <script>
 
   var users = {}
-  var compiling = false
+  var max_parallele = 4
 
   var app = new Vue({
     el: "#app",
     data: {
       queue: [],
-      compiling: false,
+      compiling: [],
       compiled: [],
       detail_index: false,
       announcements: []
@@ -233,7 +233,7 @@
   var Push = (item) => {
     app.queue.push(item)
     firebase.database().ref('admin/queue').set(app.queue)
-    if (!compiling) {
+    if (app.compiling.length<max_parallele) {
       CompileSingle()
     }
   }
@@ -295,11 +295,25 @@
     firebase.database().ref('users/' + name).set(obj)
   }
 
+  var PopNext = ()=>{
+    let job = null, i=0
+    for(i=0; i<app.queue.length; i++){
+      job = app.queue[i]
+      if(app.compiling.findIndex(o=>o.name==job.name)==-1){
+        break
+      }
+    }
+    if(i==app.queue.length)return {name:null,time:null}
+    app.queue.splice(i,1)
+    return job
+  }
+
   var CompileSingle = () => {
     if (app.queue.length == 0) return
-    var { name: name, time: time } = app.queue.shift()
-    compiling = true
-    app.compiling = { name: name, time: time, compile_time: moment() }
+    if(app.compiling.length>=max_parallele) return
+    var { name: name, time: time } = PopNext()
+    if(name==null)return
+    app.compiling.push( { name: name, time: time, compile_time: moment() })
     console.log('compiling', app.compiling)
     console.log(`start compile ${name}`)
     storageRef.child(`files/${name}/${btoa(time)}.cpp`).getDownloadURL().then(function (url) {
@@ -309,18 +323,20 @@
         success: (data) => {
           console.log('compile done', data)
           data = JSON.parse(data)
-          app.compiling.grade_time = moment()
+          let index = app.compiling.findIndex(o=>o.name==name)
+          let job = app.compiling.splice(index,1)[0]
+          job.grade_time = moment()
           if ('error' in data) {
             console.log('error', data)
             skygear.pubsub.publish(name, { type: 'grade', time: time, error: data.error})
-            app.compiling.error = data.error
+            job.error = data.error
             let temp = {}
-            Object.assign(temp, app.compiling)
+            Object.assign(temp, job)
             app.compiled.splice(0, 0, temp)
           }
           else {
-            app.compiling.compile_duration = data.compile_duration
-            app.compiling.runtime_duration = data.runtime_duration
+            job.compile_duration = data.compile_duration
+            job.runtime_duration = data.runtime_duration
             grade = Grade(data)
             FetchUser(name, (user) => {
               if (user.mark && user.mark > grade.mark) return
@@ -330,15 +346,15 @@
               SaveUser(name, user)
             })
             skygear.pubsub.publish(name, { type: 'grade', time: time, grade: grade, compile_duration:data.compile_duration,runtime_duration:data.runtime_duration })
-            app.compiling.grade = grade
+            job.grade = grade
             let temp = {}
             //Object.assign(temp,app.compiling)
-            for (let prop in app.compiling) {
-              temp[prop] = app.compiling[prop]
+            for (let prop in job) {
+              temp[prop] = job[prop]
             }
             app.compiled.splice(0, 0, temp)
           }
-          app.compiling = false
+          
           console.log(app.queue)
           console.log(app.compiled)
           firebase.database().ref('admin/queue').set(app.queue)
@@ -347,7 +363,6 @@
             CompileSingle()
           }
           else {
-            compiling = false
           }
         }
       })
@@ -359,7 +374,6 @@
         CompileSingle()
       }
       else {
-        compiling = false
       }
     });
   }
