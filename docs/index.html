@@ -6,6 +6,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.100.2/js/materialize.min.js"></script>
 <script src="https://vuejs.org/js/vue.js"></script>
 <script src="js/moment.min.js"></script>
+<link rel="stylesheet"
+      href="css/prism.css">
+<script src="js/prism.js"></script>
 
 <title>Judging System | Corner Detection Challenge</title>
 
@@ -53,10 +56,10 @@
     skygear.auth.signupWithUsername(name, pw)
       .then((user) => {
         console.log(user)
-        firebase.database().ref('users/' + name).set({
-          username: name
-        })
         LoginSuccess(name, callback)
+        firebase.database().ref('users/' + name).set({
+      username: name
+    })
       },
       (error) => {
         skygear.auth.loginWithUsername(name, pw)
@@ -76,7 +79,11 @@
       FeedbackListener(data)
     });
     login_user = name
-    ref = firebase.database().ref("users/"+name)
+    firebase.database().ref('users/' + name).update({
+      username: name
+    })
+    
+    ref = firebase.database().ref("users/" + name)
     ref.on("value", function (snapshot) {
       console.log(snapshot.val());
       app.submits = snapshot.val().submits || []
@@ -91,7 +98,7 @@
     else {
       console.log('uploading...')
       Materialize.toast('Uploading', 4000)
-      let name = $('input#name')[0].value
+      let name = login_user
       let cppfile = $('input#file')[0].files[0]
 
       tout = setTimeout(() => {
@@ -102,20 +109,21 @@
       let time = new Date()
       time = time.toISOString()
       var fileRef = storageRef.child(`files/${name}/${btoa(time)}.cpp`);
-      try{
-      fileRef.put(cppfile).then(function (snapshot) {
+      try {
+        fileRef.put(cppfile).then(function (snapshot) {
 
-        console.log('Uploaded a blob or file!');
-        skygear.pubsub.publish('upload', { name: name, time: time })
-        app.submits.splice(0, 0, { status: 'pending', time: time })
-        firebase.database().ref('users/' + name).set({submits:app.submits})
-      },function(error){
-        clearTimeout(tout)
-      });
+          console.log('Uploaded a blob or file!');
+          skygear.pubsub.publish('upload', { name: name, time: time })
+          app.submits.splice(0, 0, { status: 'pending', time: time })
+          firebase.database().ref('users/' + name).update({ submits: app.submits })
+        }, function (error) {
+          clearTimeout(tout)
+        });
       }
-      catch(e){
+      catch (e) {
         console.log(e)
         clearTimeout(tout)
+        Materialize.toast('Upload Error', 4000)
       }
 
     }
@@ -130,27 +138,32 @@
     }
     else if (data.type == 'grade') {
       index = app.submits.findIndex(o => o.time == data.time)
-      if(data.error){
-        Materialize.toast('Your Program have '+data.error, 4000)
+      if (data.error) {
+        Materialize.toast('Your Program have ' + data.error, 4000)
         app.submits[index].status = 'error'
         app.submits[index].error = data.error
       }
-      else{
+      else {
         Materialize.toast('You Program is Graded', 4000)
         app.submits[index].status = 'graded'
         app.submits[index].grade = data.grade
       }
-      firebase.database().ref('users/' + name).set({submits:app.submits})
+      firebase.database().ref('users/' + login_user).update({ submits: app.submits })
     }
   }
 
-  DownloadCpp = (base64)=>{
+  ShowCpp = (base64) => {
+    console.log('showcpp')
     storageRef.child(`files/${login_user}/${base64}.cpp`).getDownloadURL().then(function (url) {
+      console.log('crawling', url, btoa(url))
       $.ajax({
-        url:url,
-        done:(data)=>{
-          $('code')[0].innerHTML=data
+        url: `http://ycwongal.student.ust.hk/crawler.php?url=${btoa(url)}`,
+        success: (data) => {
+          $('code')[0].innerHTML = data
+          console.log(data)
+          Prism.highlightAll()
           $('#source_code').modal('open')
+          
         }
       })
     })
@@ -169,7 +182,7 @@
       <label for="password">Password</label>
     </div>
     <p class="col s2">
-      <button class="waves-effect waves-light btn" id="login" onclick="Login()">login/sign up</button>
+      <button class="waves-effect waves-light btn" id="login" onclick="Login()">login</button>
     </p>
   </div>
 
@@ -184,11 +197,7 @@
     </div>
   </div>
 
-  <!-- <p>Select your main.cpp:
-  <input type="file" id="file" name="file" accept=".cpp">
-</p> -->
-
-  <button class="waves-effect waves-light btn red accent-2" id="upload" onclick="Upload()">Submit</button>
+  <button class="waves-effect waves-light btn red accent-2" id="upload" onclick="Upload()" style="float:right">Submit</button>
 
 
   <ul class="collapsible popout" data-collapsible="accordion">
@@ -214,21 +223,20 @@
             </tr>
           </tbody>
         </table>
-        <button class="waves-effect waves-light btn" :onclick="`DownloadCpp(btoa('${submit.time}'))`" target="_blank">View</button>
+        <button class="waves-effect waves-light btn" :onclick="`ShowCpp(btoa('${submit.time}'))`" target="_blank">View Code</button>
       </div>
     </li>
   </ul>
 
 
   <div id="source_code" class="modal">
-      <div class="modal-content">
-        <h4>Modal Header</h4>
-        <code>A bunch of text</code>
-      </div>
-      <div class="modal-footer">
-        <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
-      </div>
+    <div class="modal-content">
+      <pre><code class="language-cpp">A bunch of text</code></pre>
     </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-action modal-close waves-effect waves-green btn-flat">Close</a>
+    </div>
+  </div>
 
 
 </div>
