@@ -322,7 +322,17 @@
         url: `sandbox/compile.php?name=${name}&url=${btoa(url)}`,
         success: (data) => {
           console.log('compile done', data)
-          data = JSON.parse(data)
+          try{
+            data = JSON.parse(data)
+          }catch(e){
+            if(data.indexOf('Maximum execution time')!=-1){
+              data = {error:'Maximum execution time exceeded'}
+            }
+            else{
+              data = {error:'unknown error'}
+              console.log('unknown error',e)
+            }
+          }
           let index = app.compiling.findIndex(o=>o.name==name)
           let job = app.compiling.splice(index,1)[0]
           job.grade_time = moment()
@@ -361,8 +371,6 @@
           firebase.database().ref('admin/compiled').set(JSON.stringify(app.compiled))
           if (app.queue.length > 0) {
             CompileSingle()
-          }
-          else {
           }
         }
       })

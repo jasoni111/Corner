@@ -1,4 +1,5 @@
 <?php
+set_time_limit(200);
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
   $error="";
   $name = test_input($_POST["file_name"]);
